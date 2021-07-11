@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <title>Morpion Deluxe</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="css/style.css" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" type="text/css" href="css/default.css" />
+		<link rel="stylesheet" type="text/css" href="css/component.css" />
+    <link rel="icon" href="https://clojurescript.org/images/cljs-logo-icon-32.png">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+    <script src="js/modernizr.custom.js"></script>
+    
+  </head>
+	<body class="nl-blurred">
+    <nav>
+      <div class="nav-wrapper">
+        <a lass="brand-logo">Morpion De Luxe</a>
+        <ul id="nav-mobile" class="right hide-on-med-and-down">
+          <li data-route="JvsJLocal" class="Selected" onclick="Router(this);"><a>Joueur VS Joueur (Local)</a></li>
+          <li data-route="JvsOLocal" onclick="Router(this);"><a>Joueur VS Ordinateur</a></li>
+          <li data-route="JvsJOnline" onclick="Router(this);"><a>Joueur VS Joueur (Online)</a></li>
+        </ul>
+      </div>
+    </nav>
+          
+		<div class="container demo-1">
+			<!-- <header>
+				<h1>Morpion <span>Jouez au jeu que vous aimez.</span></h1>	
+			</header> -->
+			<div id="app" class="Cacher main clearfix"></div>
+      <div id="app1VS1L"  class="main clearfix"></div>
+      <div id="app1VS1O" class="Cacher main clearfix"></div>
+
+		</div><!-- /container -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js" integrity="sha512-894YE6QWD5I59HgZOGReFYm4dnWc1Qt5NtvYSaNcOP+u1T9qYdvdihz0PPSiiqn/+/3e7Jo4EaG7TubfWGUrMQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script type="text/javascript">
+      function Router(e){
+
+        var app =  $("#app");
+        var app1VS1L =  $("#app1VS1L");
+        var app1VS1O =  $("#app1VS1O");
+
+        console.log(app);
+        app.addClass("Cacher");
+        app1VS1L.addClass("Cacher");
+        app1VS1O.addClass("Cacher");
+
+
+        for (let index = 0; index < $("#nav-mobile").children().length; index++) {
+          const element = $("#nav-mobile").children()[index];
+          console.log(element);
+          element.classList.remove("Selected");
+        }
+        var element = e;
+        element.classList.add("Selected");
+        var cible = e.getAttribute("data-route");
+
+        switch (cible) {
+          case "JvsJLocal":
+          app1VS1L.removeClass("Cacher");
+          break;
+
+          case "JvsOLocal":
+          app.removeClass("Cacher");
+          break;
+
+          case "JvsJOnline":
+          app1VS1O.removeClass("Cacher");
+          break;
+        
+          default:
+            break;
+        }
+      }
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="js/compiled/game_morpion.js" type="text/javascript"></script>
+  </body>
+</html>
