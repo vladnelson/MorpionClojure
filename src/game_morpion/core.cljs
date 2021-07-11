@@ -8,6 +8,8 @@
 
 (def board-size 3)
 
+(def win-length 3)
+
 (defn new-board [n]
   (vec (repeat n (vec (repeat n "B"))))
 )
@@ -22,23 +24,102 @@
   (atom 
     {:text "Joueur VS Ordinateur"
      :board (new-board 3)
+     :game-status :in-progress
     }
   )
 )
 
 
-(defn computer-move[app ]
-  (let [board (:board @app) 
-                remaining-spots (for [
+;;------------------------------------------------------------------------------------------
+;; L'IA Joue
+;;------------------------------------------------------------------------------------------
+(defn computer-move [board]
+  (let [remaining-spots (for [
                               i (range board-size)
                               j (range board-size)
                               :when (= (get-in board [j i]) "B")
                              ]
-                             [i j]
+                             [j i]
                         )
-       move (rand-nth remaining-spots)
-       path (into [:board] (reverse move))]
-    (swap! app assoc-in path "C")
+          move (when (seq remaining-spots) 
+                      (rand-nth remaining-spots)
+                )
+          ]
+     (if move
+      (assoc-in board move "C")
+      board)
+  )
+)
+
+
+(defn straight [owner board [x y] [dx dy] n]
+  (every? true?
+    (for [i (range n)]
+      (= (get-in  board [
+                          (+ (* dx i) x)
+                          (+ (* dy i) y)
+                        ]
+         )
+         owner
+      )
+    )    
+  )
+)
+
+;;------------------------------------------------------------------------------------------
+;; Check if win.
+;;------------------------------------------------------------------------------------------
+(defn is_win [owner board n]
+  (some true? 
+      (for [
+            i (range board-size)
+            j (range board-size)
+            dir [[1 0] [0 1] [1 1] [1 -1]]
+           ]
+           (straight owner board [i j] dir n)
+      )
+  )
+)
+
+;;------------------------------------------------------------------------------------------
+;; Check if all case is played.
+;;------------------------------------------------------------------------------------------
+(defn is_finish [board]
+  (every? #{"P" "C"}
+    (apply concat board)
+  )
+)
+
+;;------------------------------------------------------------------------------------------
+;; Enum Status .
+;;------------------------------------------------------------------------------------------
+(defn game-status [board] 
+  (cond
+      (is_win "P" board win-length) :player-victory
+      (is_win "C" board win-length) :computer-victory
+      (is_finish board) :draw
+      :else :in-progress
+  )
+)
+
+;;------------------------------------------------------------------------------------------
+;; Update status 
+;;------------------------------------------------------------------------------------------
+(defn update-status [state]
+  (assoc state :game-status 
+    (game-status 
+      (:board state)
+    )
+  )
+)
+
+;;------------------------------------------------------------------------------------------
+;; Update status 
+;;------------------------------------------------------------------------------------------
+(defn check-game-status [state]
+  (-> state
+    (update-in [:board] computer-move)
+    (update-status)
   )
 )
 
@@ -56,9 +137,13 @@
         :y (+ 0.05 j)
         :on-click
         (fn rect-click[e]
-          (prn "You clicked me !" i j)
-          (prn (swap!  app assoc-in [:board j i] "P"))
-          (computer-move app)
+          (when (= (:game-status @app) :in-progress)
+            (swap! app assoc-in [:board j i] "P")
+            (if (is_win "P" (:board @app) win-length)
+              (swap! app assoc :game-status :player-victory)
+              (swap! app check-game-status)
+            )
+          )         
         )
       }
     ]
@@ -68,8 +153,10 @@
   (defn circle [i j]
     [:circle
       {
-        :r 0.45
-        :fill "green"
+        :r 0.35
+        :stroke "green"
+        :stroke-width 0.12
+        :fill "none"
         :cx (+ 0.5 i)
         :cy (+ 0.5 j)
       }
@@ -104,6 +191,14 @@
   (defn game_morpion1VSO [] 
     [:center
       [:h4 (:text @app-state)]
+      [:h2 
+          (case (:game-status @app-state)
+              :player-victory "Vous avez gagnée !"
+              :computer-victory "Vous avez perdu !"
+              :draw "Match Null"
+              ""
+          )
+      ]
        [:p 
         [:button
           {:on-click
@@ -148,6 +243,7 @@
   (atom 
     {:text "Joueur VS Joueur (Local)"
      :board (new-board 3)
+     :game-status :in-progress
     }
   )
 )
@@ -155,6 +251,14 @@
  (defn game_morpion1VS1L [] 
     [:center
       [:h4 (:text @app-state1Vs1L)]
+       [:h2 
+          (case (:game-status @app-state)
+              :player1-victory "Joueur 1 à gagné !"
+              :player2-victory "Joueur 2 à gagné !"
+              :draw "Match Null ."
+              ""
+          )
+      ]
        [:p 
         [:button
           {:on-click
@@ -200,6 +304,7 @@
   (atom 
     {:text "Joueur VS Joueur (Online)"
      :board (new-board 3)
+     :game-status :in-progress
     }
   )
 )
@@ -208,6 +313,14 @@
    (defn game_morpion1VS1O [] 
     [:center
       [:h4 (:text @app-state1Vs1O)]
+         [:h2 
+          (case (:game-status @app-state)
+              :player1-victory "Vous avez gagnée !"
+              :player2-victory "Vous avez perdu !"
+              :draw "Match Null ."
+              ""
+          )
+        ]
        [:p 
         [:button
           {:on-click

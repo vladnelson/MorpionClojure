@@ -1,4 +1,4 @@
-# game_morpion
+# MorpionClojure
 
 FIXME: Write a one-line description of your library/project.
 
