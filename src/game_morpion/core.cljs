@@ -20,6 +20,7 @@
 
 
 
+
 ;;==========================================================================================
 ;; Joueur VS Ordinateur 
 ;;==========================================================================================
@@ -29,6 +30,9 @@
      :board (new-board 3)
      :game-status :in-progress
      :name "JVSO"
+     :Joueur 0
+     :Ordinateur 0
+     :draw 0
     }
   )
 )
@@ -128,7 +132,9 @@
   (-> state
     (update-in [:board] computer-move)
     (update-status)
+    
   )
+  
 )
 
 (defn check-game-statusL [state]
@@ -140,7 +146,7 @@
 
 
 ;;------------------------------------------------------------------------------------------
-;; Status Case
+;; Fonction sur une case
 ;;------------------------------------------------------------------------------------------
   (defn blank [i j app]
     [:rect 
@@ -163,19 +169,36 @@
                     ( 
                       (swap! app assoc-in [:board j i] "PL1")
                       (swap! app assoc :is_turn_player1 false)
+                      
                     )
 
                     ( 
                       (swap! app assoc-in [:board j i] "PL2")
                       (swap! app assoc :is_turn_player1 true)
+                      
                     )                 
                  )     
 
                   (if (is_win "PL1" (:board @app) win-length)
-                    (swap! app assoc :game-status :playerL1-victory) ;; Si Oui
+                    (  ;; Si Oui
+                      (swap! app assoc :game-status :playerL1-victory) 
+                      (swap! app assoc :Joueur1 (+ (:Joueur1 @app) 1))
+                    )
+                   
+                   
                     (if (is_win "PL2" (:board @app) win-length) ;; SI Non
-                      (swap! app assoc :game-status :playerL2-victory) ;; Si Oui
-                      (swap! app check-game-statusL) ;; Si Non
+                      (   ;; Si Oui
+                        (swap! app assoc :game-status :playerL2-victory) 
+                        (swap! app assoc :Joueur2 (+ (:Joueur2 @app) 1))
+                      )
+                     
+                      (
+                        (swap! app check-game-statusL)
+                        (if  (= (game-status  (:board @app)) :draw )
+                          (swap! app assoc :draw (+ (:draw @app) 1))    
+                          (prn @app)                  
+                        )
+                      ) ;; Si Non
                     )
                   )
                 )
@@ -183,8 +206,22 @@
                (when (= (:game-status @app) :in-progress)
                   (swap! app assoc-in [:board j i] "P")
                   (if (is_win "P" (:board @app) win-length)
-                    (swap! app assoc :game-status :player-victory)
-                    (swap! app check-game-status)
+                    (
+                      (swap! app assoc :game-status :player-victory)
+                      (swap! app assoc :Joueur (+ (:Joueur @app) 1))
+                    )
+
+                    (
+                      (swap! app check-game-status)
+                      (if  (= (game-status  (:board @app)) :draw )
+                        (swap! app assoc :draw (+ (:draw @app) 1))  
+                     
+                        (if  (= (game-status  (:board @app)) :computer-victory )
+                           (swap! app assoc :Ordinateur (+ (:Ordinateur @app) 1))    
+                            (prn app)    
+                        )               
+                      )
+                    )                    
                   )
                 )
 
@@ -230,10 +267,15 @@
     ]
   )
 
+
 ;;------------------------------------------------------------------------------------------
-;; End - Status Case
+;; End - Status Case 
 ;;------------------------------------------------------------------------------------------
 
+
+;;----------------------------------------------------------------------------------------------
+;; Add-on 1 (3 points) : un mode joueur vs ordinateur (+3 points si l'ordinateur joue bien ...)
+;;----------------------------------------------------------------------------------------------
   (defn game_morpion1VSO [] 
     [:center
       [:h4 (:text @app-state)]
@@ -248,10 +290,14 @@
        [:p 
         [:button
           {:on-click
-            (fn new-game [e]
+            (fn reset-game [e]
                (swap! app-state assoc
-               :board (new-board board-size)
-               :game-status :in-progress)
+                  :Joueur 0
+                  :Ordinateur 0
+                  :draw 0
+                  :board (new-board board-size)
+                  :game-status :in-progress
+               )
             )  
           :class "btn red"            
           }
@@ -297,26 +343,26 @@
         ]
         [:tbody
           [:tr
-            [:td "Joueur 1"]
-            [:td "0"]
+            [:td "Joueur"]
+            [:td ( :Joueur @app-state)]
           ]
           [:tr
             [:td "Ordinateur"]
-            [:td "0"]
+           [:td ( :Ordinateur @app-state)]
           ]
           [:tr
             [:td "Null"]
-            [:td "0"]
-          ]
+           [:td ( :draw @app-state)]
+          ]           
         ]      
       ]
     ]
   )
 
 
-;;==========================================================================================
-;; Joeur VS Joueur (Local)
-;;==========================================================================================
+;;==============================================================================================================================
+;; Joeur VS Joueur (Local) - Base (14 points) : le morpion 3x3 (tic-tac-toe), en mode deux joueurs jouant sur la même page web
+;;==============================================================================================================================
                     
 (defonce app-state1Vs1L
   (atom 
@@ -325,6 +371,9 @@
      :game-status :in-progress
      :is_turn_player1 true
      :name "JVSJL"
+     :Joueur1 0
+     :Joueur2 0
+     :draw 0
     }
   )
 )
@@ -343,10 +392,14 @@
        [:p 
          [:button
           {:on-click
-            (fn new-game [e]
-               (swap! app-state assoc
-               :board (new-board board-size)
-               :game-status :in-progress)
+            (fn reset-game [e]
+              (swap! app-state1Vs1L assoc
+                  :Joueur1 0
+                  :Joueur2 0
+                  :draw 0
+                  :board (new-board board-size)
+                  :game-status :in-progress
+              )
             )  
           :class "btn red"            
           }
@@ -393,15 +446,15 @@
         [:tbody
           [:tr
             [:td "Joueur 1"]
-            [:td "0"]
+            [:td (:Joueur1 @app-state1Vs1L)]
           ]
           [:tr
             [:td "Joueur 2"]
-            [:td "0"]
+            [:td (:Joueur2 @app-state1Vs1L)]
           ]
           [:tr
             [:td "Null"]
-            [:td "0"]
+            [:td (:draw @app-state1Vs1L)]
           ]
         ]      
       ]
@@ -438,11 +491,12 @@
        [:p 
          [:button
           {:on-click
-            (fn new-game [e]
-               (swap! app-state assoc
-               :board (new-board board-size)
-               :game-status :in-progress)
-            )  
+            (fn reset-game [e]
+              (swap! app-state1Vs1O assoc
+                  :board (new-board board-size)
+                  :game-status :in-progress
+              )
+            )   
           :class "btn red"            
           }
           "Reset Score"
