@@ -38,28 +38,6 @@
 )
 
 
-;;------------------------------------------------------------------------------------------
-;; L'IA Joue
-;;------------------------------------------------------------------------------------------
-(defn computer-move [board]
-  (let [remaining-spots (for [
-                              i (range board-size)
-                              j (range board-size)
-                              :when (= (get-in board [j i]) "B")
-                             ]
-                             [j i]
-                        )
-          move (when (seq remaining-spots) 
-                      (rand-nth remaining-spots)
-                )
-          ]
-     (if move
-      (assoc-in board move "C")
-      board)
-  )
-)
-
-
 (defn straight [owner board [x y] [dx dy] n]
   (every? true?
     (for [i (range n)]
@@ -97,7 +75,7 @@
     (apply concat board)
   )
 )
- 
+
 ;;------------------------------------------------------------------------------------------
 ;; Enum Status .
 ;;------------------------------------------------------------------------------------------
@@ -113,6 +91,65 @@
       :else :in-progress
   )
 )
+
+;;------------------------------------------------------------------------------------------
+;; L'IA Can win
+;;------------------------------------------------------------------------------------------
+(defn can_win? [board row]
+       (= (game-status (assoc-in board row "C") )  :computer-victory )       
+)
+
+;;------------------------------------------------------------------------------------------
+;; L'IA Can Lose
+;;------------------------------------------------------------------------------------------
+(defn can_lose? [board row]
+    (= (game-status (assoc-in board row "P") )  :player-victory )    
+)
+
+(defn best_move [board  board_selected] 
+    (for [[x row] (map-indexed vector board_selected) 
+      
+      :when  (or (= (can_win? board row) true ) (= (can_lose? board row) true ) ) ]
+   [row])
+
+)
+
+;;------------------------------------------------------------------------------------------
+;; L'IA Joue
+;;------------------------------------------------------------------------------------------
+(defn computer-move [board]
+  (let [remaining-spots (for [
+                              i (range board-size)
+                              j (range board-size)
+                              :when (= (get-in board [j i]) "B")
+                             ]
+                             [j i]                                                       
+                             
+                        )
+                      
+          move (when (seq remaining-spots) 
+                      (rand-nth remaining-spots)
+                )
+          move_best  (when (seq (best_move board remaining-spots) ) 
+                      (nth (best_move board remaining-spots) 0)
+                ) 
+          ]        
+     (if move
+        (if (> (count (best_move board remaining-spots)) 0)
+          (assoc-in board (get move_best 0) "C")
+          (assoc-in board move "C") 
+        )      
+      board
+     )
+  )
+)
+
+
+
+
+
+ 
+
 
 ;;------------------------------------------------------------------------------------------
 ;; Update status 
